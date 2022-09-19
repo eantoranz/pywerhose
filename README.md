@@ -1,6 +1,6 @@
 # What is pywerhose?
 
-- It is a library to generate powers one after the other.
+- It is a library to generate powers one after the other. Ex: 2<sup>2</sup>, 2<sup>3</sup>, 3<sup>2</sup>, 2<sup>4</sup>, 5<sup>2</sup>, 3<sup>3</sup>, 2<sup>5</sup>....
 
 # examples
 
