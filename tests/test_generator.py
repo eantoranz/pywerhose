@@ -53,6 +53,18 @@ class BasicTest(unittest.TestCase):
         self.assertEqual((5, 3, 125), generator.next_power())
         self.assertEqual((2, 7, 128), generator.next_power())
 
+    def test_start_from_a_power(self):
+        generator = Generator(start_from = 1000)
+        self.assertEqual((10, 3, 1000), generator.next_power())
+        self.assertEqual((2, 10, 1024), generator.next_power())
+        self.assertEqual((33, 2, 1089), generator.next_power())
+        self.assertEqual((34, 2, 1156), generator.next_power())
+
+    def test_start_from_a_non_power(self):
+        generator = Generator(start_from = 1001)
+        self.assertEqual((2, 10, 1024), generator.next_power())
+        self.assertEqual((33, 2, 1089), generator.next_power())
+        self.assertEqual((34, 2, 1156), generator.next_power())
 
 if __name__ == "__main__":
     unittest.main()

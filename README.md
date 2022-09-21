@@ -59,8 +59,19 @@ generator.next_power() # (5, 4, 625)
 generator.next_power() # (10, 3, 1000)
 ```
 
+## Generate powers starting at a given point
+```
+from pywerhose import Generator
+
+generator = Generator(start_from = 1000)
+generator.next_power() # (10, 3, 1000)
+generator.next_power() # (2, 10, 1024)
+generator.next_power() # (33, 2, 1089)
+generator.next_power() # (34, 2, 1156)
+```
+
+
 # TODO
-- Start producing powers from a random number
 - Generate them backward
 
 # Licensing
