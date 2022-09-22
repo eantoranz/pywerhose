@@ -26,18 +26,27 @@ class Power:
 
 class Generator:
 
-    def __init__(self, min_base:int = 2, min_power: int = 2, step: int = 1, start_from: int | None = None) -> None:
+    def __init__(self, min_base:int = 2, min_power: int = 2, step: int = 1, start_from: int | None = None, reverse: bool = False) -> None:
         self.min_base = min_base
         self.min_power = min_power
         self.step = step
         self.start_from = start_from
+        self.reverse = reverse
+        
+        if reverse and start_from is None:
+            raise Exception("Need to setup a value to start from to go in reverse")
         
         # the current list of powers
         self.powers = list[Power]()
         
-        self.setup_powers()
+        if reverse:
+            self.setup_powers_down()
+            self.next = self.previous_power
+        else:
+            self.setup_powers_up()
+            self.next = self.next_power
 
-    def setup_powers(self):
+    def setup_powers_up(self):
         if self.start_from is None:
             starting_power = Power(self.min_base, self.min_power)
             self.powers.append(starting_power)
@@ -45,7 +54,7 @@ class Generator:
             # need to setup all appropriate powers necessary
             base = self.min_base
             log_start_from = math.log(self.start_from)
-            max_power, value = self.max_power(base, self.start_from, log_start_from) # base^max_power <= start_from
+            max_power, value = self.get_max_power(base, self.start_from, log_start_from) # base^max_power <= start_from
             if value < self.start_from:
                 max_power += 1 # make sure to include a power for min_base
             power = max_power
@@ -55,7 +64,7 @@ class Generator:
                 if power < self.min_power:
                     # no need to continue
                     break
-                base, value = self.max_base(power, self.start_from) # base is already corrected to match min_base and step
+                base, value = self.get_max_base(power, self.start_from) # base is already corrected to match min_base and step
                 if value < self.start_from:
                     # increase the base so that we are over the value
                     base += self.step
@@ -66,18 +75,39 @@ class Generator:
                 powers.append(_power)
                 power -= 1
             if not has_min_base:
-                raise Exception("BUG: With this setup(min_base, step, min_power, start_from), powers were not setup with min_base included")
+                # Need to include a power with min_base
+                powers.append(self.min_base, max_power + 1)
             # now we sort them out
             self.insort_powers(powers)
     
+    def setup_powers_down(self):
+        # need to setup all appropriate powers necessary
+        base = self.min_base
+        log_start_from = math.log(self.start_from)
+        max_power, value = self.get_max_power(base, self.start_from, log_start_from) # base^max_power <= start_from
+        power = max_power
+        powers = []
+        while True:
+            if power < self.min_power:
+                break
+            base, value = self.get_max_base(power, self.start_from) # base is already corrected to match min_base and step
+            if base < self.min_base:
+                break
+            _power = Power(base, power, value)
+            powers.append(_power)
+            power -= 1
+        # now we sort them out
+        self.insort_powers(powers)
+
     def insort_powers(self, powers: list[Power]) -> None:
         for power in powers:
             if not self.powers or power.value < self.powers[0].value:
                 self.powers.insert(0, power)
                 continue
-            index = 0
+            lo = 0
+            hi = len(self.powers)
             while True:
-                pos = bisect.bisect_left(self.powers, power, lo=index)
+                pos = bisect.bisect_left(self.powers, power, lo = lo, hi = hi)
                 if pos < len(self.powers):
                     old_power = self.powers[pos]
                     if old_power.value == power.value:
@@ -90,16 +120,20 @@ class Generator:
                             # replacing for new values in temp
                             power.base = temp[0]
                             power.power = temp[1]
-                        power.base += self.step
+                        if self.reverse:
+                            power.base -= self.step
+                            hi = pos - 1
+                        else:
+                            power.base += self.step
+                            lo = pos + 1
                         power.value = power.base ** power.power
-                        index = pos + 1
                     else:
                         self.powers.insert(pos, power)
                         break
                 else:
                     self.powers.append(power)
                     break
-    
+
     def next_power(self) -> (int, int, int):
         # look for the table with the lowest value
         current_power: Power = self.powers.pop(0)
@@ -121,7 +155,23 @@ class Generator:
 
         return power
 
-    def max_power(self, base: int, limit: int, limit_log: float):
+    def previous_power(self) -> (int, int, int):
+        # look for the table with the highest value
+        current_power: Power = self.powers.pop()
+        
+        # save current value which will be returned.
+        power = (current_power.base, current_power.power, current_power.value) # this is what will be returned
+
+        # update values in table
+        current_power.base -= self.step
+        if current_power.base >= self.min_base:
+            current_power.value = current_power.base ** current_power.power
+            powers = [current_power]
+            self.insort_powers(powers)
+
+        return power
+
+    def get_max_power(self, base: int, limit: int, limit_log: float):
         """
         limit_log is math.log of limit (so that we don't do it over and over again)
         limit is passed down for verification
@@ -130,14 +180,30 @@ class Generator:
         result = base ** power
 
         # the following lines are for verification purposes, can be deleted once I have made sure they work
-        if not result <= limit:
-            raise Exception(f"BUG: max_power({base}, {limit}, {limit_log}): {base}^{power} is over the limit")
-        if (result * base <= limit):
-            raise Exception(f"BUG: max_power({base}, {limit}, {limit_log}): {base}^({power}+1) is <= limit")
+        if result > limit:
+            raise Exception(f"BUG: max_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^{power} is over the limit")
+        if result * base <= limit:
+            raise Exception(f"BUG: max_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^({power}+1) is <= limit")
 
         return power, result
 
-    def max_base(self, power: int, limit: int):
+    def get_min_power(self, base: int, limit: int, limit_log: float):
+        """
+        limit_log is math.log of limit (so that we don't do it over and over again)
+        limit is passed down for verification
+        """
+        power = int(math.ceil(limit_log / math.log(base)))
+        result = base ** power
+
+        # the following lines are for verification purposes, can be deleted once I have made sure they work
+        if result < limit:
+            raise Exception(f"BUG: min_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^{power} is < limit")
+        if result / base >= limit:
+            raise Exception(f"BUG: min_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^({power}-1) >= limit")
+
+        return power, result
+    
+    def get_max_base(self, power: int, limit: int):
         """
         Return max value of base so that base^power <= limit
 
@@ -148,19 +214,47 @@ class Generator:
 
         # the following lines are for verification purposes, can be deleted once I have made sure they work
         if value > limit:
-            raise Exception(f"BUG: max_base({power}, {limit}): {base}^{power} is over the limit")
+            raise Exception(f"BUG: max_base(base={base}, limit={limit}): {base}^{power} > limit")
         if ((base + 1) ** power < limit):
             # rounding error
             base += 1
             value = base ** power
         if ((base + 1) ** power < limit):
-            raise Exception(f"BUG: max_base({power}, {limit}): {base+1}^({power}) is < limit")
+            raise Exception(f"BUG: max_base(base={base}, limit={limit}): {base+1}^({power}) is < limit")
 
         if self.step > 1:
             # let's adjust power so that it matches configuration
             mod = (base - self.min_base) % self.step
             if mod > 0:
                 base -= mod
+                value = base ** power
+
+        return base, value
+
+    def get_min_base(self, power: int, limit: int):
+        """
+        Return min value of base so that base^power >= limit
+
+        Value of base _has_ to match min_base/step configuration
+        """
+        base = int(math.ceil(math.pow(limit, 1.0 / power)))
+        value = base ** power
+
+        # the following lines are for verification purposes, can be deleted once I have made sure they work
+        if value < limit:
+            raise Exception(f"BUG: min_base(base={base}, limit={limit}): {base}^{power} < limit")
+        if ((base - 1) ** power > limit):
+            # rounding error
+            base -= 1
+            value = base ** power
+        if ((base - 1) ** power > limit):
+            raise Exception(f"BUG: min_base(base={base}, limit={limit}): {base-1}^({power}) > limit")
+
+        if self.step > 1:
+            # let's adjust power so that it matches configuration
+            mod = (base - self.min_base) % self.step
+            if mod > 0:
+                base += mod
                 value = base ** power
 
         return base, value
