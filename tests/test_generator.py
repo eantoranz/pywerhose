@@ -7,7 +7,7 @@ import unittest
 
 from pywerhose import Generator
 
-class BasicTest(unittest.TestCase):
+class BasicTests(unittest.TestCase):
 
     def test_basic(self):
         generator = Generator()
@@ -82,6 +82,23 @@ class BasicTest(unittest.TestCase):
         self.assertEqual((29, 2, 841), generator.next())
         self.assertEqual((28, 2, 784), generator.next())
         self.assertEqual((3, 6, 729), generator.next())
+
+class RandomTests(unittest.TestCase):
+    """
+    Tests of bugs that have been coming up while using the library
+    """
+
+    def test1(self):
+        generator = Generator(start_from = 2 ** 17 - 1, reverse = True, min_base = 3, step = 2, min_power = 3)
+        current = generator.next()
+        while True:
+            if (current == (3, 3, 27)):
+                break
+            last = current
+            current = generator.next()
+            if current[2] >= last[2]:
+                print(f"FAILING: current value {current} > last value {last}")
+            self.assertTrue(current[2] < last[2])
 
 if __name__ == "__main__":
     unittest.main()

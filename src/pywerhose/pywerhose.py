@@ -122,10 +122,10 @@ class Generator:
                             power.power = temp[1]
                         if self.reverse:
                             power.base -= self.step
-                            hi = pos - 1
+                            hi = pos
                         else:
                             power.base += self.step
-                            lo = pos + 1
+                            lo = pos
                         power.value = power.base ** power.power
                     else:
                         self.powers.insert(pos, power)
