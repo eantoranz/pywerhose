@@ -181,9 +181,9 @@ class Generator:
 
         # the following lines are for verification purposes, can be deleted once I have made sure they work
         if result > limit:
-            raise Exception(f"BUG: max_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^{power} is over the limit")
+            raise Exception(f"BUG: get_max_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^{power} > limit")
         if result * base <= limit:
-            raise Exception(f"BUG: max_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^({power}+1) is <= limit")
+            raise Exception(f"BUG: get_max_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^({power}+1) is <= limit")
 
         return power, result
 
@@ -198,13 +198,17 @@ class Generator:
 
         # the following lines are for verification purposes, can be deleted once I have made sure they work
         if value > limit:
-            raise Exception(f"BUG: max_base(base={base}, limit={limit}): {base}^{power} > limit")
+            # rounding error
+            base -= self.step
+            value = base ** power
+        if value > limit:
+            raise Exception(f"BUG: get_max_base(power={power}, limit={limit}): {base}^{power} > limit")
         if ((base + 1) ** power < limit):
             # rounding error
             base += 1
             value = base ** power
         if ((base + 1) ** power < limit):
-            raise Exception(f"BUG: max_base(base={base}, limit={limit}): {base+1}^({power}) is < limit")
+            raise Exception(f"BUG: get_max_base(power={power}, limit={limit}): {base+1}^({power}) is < limit")
 
         if self.step > 1:
             # let's adjust power so that it matches configuration

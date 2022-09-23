@@ -100,6 +100,18 @@ class RandomTests(unittest.TestCase):
                 print(f"FAILING: current value {current} > last value {last}")
             self.assertTrue(current[2] < last[2])
 
+    def test2(self):
+        generator = Generator(start_from = 2 ** 51 - 1, reverse = True, min_base = 3, step = 2, min_power = 3)
+        current = generator.next()
+        while True:
+            if (current == (3, 3, 27)):
+                break
+            last = current
+            current = generator.next()
+            if current[2] >= last[2]:
+                print(f"FAILING: current value {current} > last value {last}")
+            self.assertTrue(current[2] < last[2])
+
 if __name__ == "__main__":
     unittest.main()
 
