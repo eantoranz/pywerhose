@@ -104,6 +104,9 @@ class Generator:
             if not self.powers or power.value < self.powers[0].value:
                 self.powers.insert(0, power)
                 continue
+            elif power.value > self.powers[-1].value:
+                self.powers.append(power)
+                continue
             lo = 0
             hi = len(self.powers)
             while True:
