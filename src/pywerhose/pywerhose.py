@@ -187,22 +187,6 @@ class Generator:
 
         return power, result
 
-    def get_min_power(self, base: int, limit: int, limit_log: float):
-        """
-        limit_log is math.log of limit (so that we don't do it over and over again)
-        limit is passed down for verification
-        """
-        power = int(math.ceil(limit_log / math.log(base)))
-        result = base ** power
-
-        # the following lines are for verification purposes, can be deleted once I have made sure they work
-        if result < limit:
-            raise Exception(f"BUG: min_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^{power} is < limit")
-        if result / base >= limit:
-            raise Exception(f"BUG: min_power(base={base}, limit={limit}, limit_log={limit_log}): {base}^({power}-1) >= limit")
-
-        return power, result
-    
     def get_max_base(self, power: int, limit: int):
         """
         Return max value of base so that base^power <= limit
@@ -227,34 +211,6 @@ class Generator:
             mod = (base - self.min_base) % self.step
             if mod > 0:
                 base -= mod
-                value = base ** power
-
-        return base, value
-
-    def get_min_base(self, power: int, limit: int):
-        """
-        Return min value of base so that base^power >= limit
-
-        Value of base _has_ to match min_base/step configuration
-        """
-        base = int(math.ceil(math.pow(limit, 1.0 / power)))
-        value = base ** power
-
-        # the following lines are for verification purposes, can be deleted once I have made sure they work
-        if value < limit:
-            raise Exception(f"BUG: min_base(base={base}, limit={limit}): {base}^{power} < limit")
-        if ((base - 1) ** power > limit):
-            # rounding error
-            base -= 1
-            value = base ** power
-        if ((base - 1) ** power > limit):
-            raise Exception(f"BUG: min_base(base={base}, limit={limit}): {base-1}^({power}) > limit")
-
-        if self.step > 1:
-            # let's adjust power so that it matches configuration
-            mod = (base - self.min_base) % self.step
-            if mod > 0:
-                base += mod
                 value = base ** power
 
         return base, value

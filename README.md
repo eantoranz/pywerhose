@@ -83,7 +83,7 @@ generator.next() # (3, 6, 729)
 ```
 
 # TODO
-- Generate them backward
+- Package/Publish it.
 
 # Licensing
 The package is released under the terms of GPLv3.
