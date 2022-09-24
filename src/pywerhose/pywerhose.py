@@ -227,3 +227,13 @@ class Generator:
                 value = base ** power
 
         return base, value
+
+if __name__ == "__main__":
+    import sys
+    limit = int(sys.argv[1])
+    generator = Generator()
+    while True:
+        value = generator.next()
+        if value[2] > limit:
+            break
+        print(value)
