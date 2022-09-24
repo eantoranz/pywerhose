@@ -125,6 +125,8 @@ class Generator:
                             power.power = temp[1]
                         if self.reverse:
                             power.base -= self.step
+                            if power.base < self.min_base:
+                                break # we let go of this power
                             hi = pos
                         else:
                             power.base += self.step
