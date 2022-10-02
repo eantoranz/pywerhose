@@ -196,22 +196,26 @@ class Generator:
 
         Value of base _has_ to match min_base/step configuration
         """
-        base = int(math.floor(math.pow(limit, 1.0 / power)))
+        bits = int(math.ceil((limit.bit_length() / power)))
+        temp = 1 << bits
+        bit = bits
+        base = 0
+        while bit >= 0:
+            res = (base + temp) ** power
+            if res <= limit:
+                base += temp
+                if res == limit:
+                    # got it
+                    break
+            bit -= 1
+            temp >>= 1
         value = base ** power
 
         # the following lines are for verification purposes, can be deleted once I have made sure they work
         if value > limit:
-            # rounding error
-            base -= self.step
-            value = base ** power
-        if value > limit:
             raise Exception(f"BUG: get_max_base(power={power}, limit={limit}): {base}^{power} > limit")
         if ((base + 1) ** power < limit):
-            # rounding error
-            base += 1
-            value = base ** power
-        if ((base + 1) ** power < limit):
-            raise Exception(f"BUG: get_max_base(power={power}, limit={limit}): {base+1}^({power}) is < limit")
+            raise Exception(f"BUG: get_max_base(power={power}, limit={limit}): ({base+1})^{power} is < limit")
 
         if self.step > 1:
             # let's adjust power so that it matches configuration
