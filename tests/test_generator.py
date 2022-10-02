@@ -77,6 +77,7 @@ class BasicTests(unittest.TestCase):
 
     def test_reverse_from_a_power(self):
         generator = Generator(start_from = 1000, reverse = True)
+        self.assertEqual((10, 3, 1000), generator.next())
         self.assertEqual((31, 2, 961), generator.next())
         self.assertEqual((30, 2, 900), generator.next())
         self.assertEqual((29, 2, 841), generator.next())
